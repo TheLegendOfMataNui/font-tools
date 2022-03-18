@@ -4,6 +4,7 @@
 
 import sys
 from PIL import Image
+import os
 
 # For usage, check BionicleFont.info :stuck_out_tongue:
 
@@ -198,13 +199,15 @@ def do_things(image, args):
         fnt.extend(convert(entry.kerning//color))
         fnt.extend(convert(entry.baseline))
     # print(fnt)
-
+    if not os.path.exists(image[:-4]+"/"):
+        print("Creating directory!")
+        os.makedirs(image[:-4]+"/")
     for i in range(len(splitfiles)):
-        splitfiles[i].save(image[:-4]+"0_"+str(i)+".tga", "TGA")
+        splitfiles[i].save(image[:-4]+"/"+image[:-4]+"0_"+str(i)+".tga", "TGA")
         # print("Save",i)
         # input()
 
-    with open(image[:-3]+"fnt", 'wb') as the_file:
+    with open(image[:-4]+"/"+image[:-3]+"fnt", 'wb') as the_file:
         the_file.write(bytearray(fnt))
 
 
