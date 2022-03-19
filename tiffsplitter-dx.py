@@ -9,12 +9,13 @@ import os
 # For usage, check BionicleFont.info :stuck_out_tongue:
 
 class FNTEntry:
-    def __init__(self, c, w, h, k, b):
+    def __init__(self, c, w, h, k, b, m):
         self.code = c
         self.width = w
         self.height = h
         self.kerning = k
         self.baseline = b
+        self.manual = m
 
 
 def find_right_edge(image):
@@ -140,6 +141,8 @@ def do_things(image, args):
     else:
         color = 1
     chars = args[6]  # needed
+    mkerning = [int(i) for i in args[7]]
+
     # print(chars)
     bchars = []
     i = 0
@@ -169,17 +172,20 @@ def do_things(image, args):
         bottom = find_bottom_edge(splitfiles[i])
         # print("Inferences:")
         charwidth = right - left
+        # charwidth = right
         charheight = bottom - top
-        ckerning = left
+        ckerning = left + 1
         cbase = tile_height - (bottom + 1)
         """print("Width:", charwidth)
         print("Height:", charheight)
         print("Kerning:", ckerning)
         print("Baseline:", cbase)"""
-        entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase))
+        # if mkerning[i] != 0:
+            #print(bchars[i],"has manual kerning!",mkerning[i])
+        entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, mkerning[i]))
 
     print(len(entries))
-
+    print(len(mkerning))
     # FILE OUTPUT
     fnt = []
     fnt.extend(convert(1))
@@ -194,10 +200,12 @@ def do_things(image, args):
     for entry in entries:
         fnt.append(entry.code)
         fnt.append(0)
-        fnt.extend(convert(entry.width//color))
-        fnt.extend(convert(entry.height))
-        fnt.extend(convert(entry.kerning//color))
-        fnt.extend(convert(entry.baseline))
+        # fnt.extend(convert(int(round(entry.width/color)) - entry.manual))
+        fnt.extend(convert((entry.width//color) - entry.manual))
+        fnt.extend(convert(int(round(entry.height/color))))
+        fnt.extend(convert((entry.kerning//color) + entry.manual))
+        # fnt.extend(convert(int(round(entry.kerning/color)) + entry.manual))
+        fnt.extend(convert(int(round(entry.baseline/color))))
     # print(fnt)
     if not os.path.exists(image[:-4]+"/"):
         print("Creating directory!")
