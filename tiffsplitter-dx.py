@@ -166,22 +166,24 @@ def do_things(image, args):
     splitfiles = split_up(im, tile_width, tile_height)
     entries = []
     for i in range(len(splitfiles)):
-        left = find_left_edge(splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC))
-        right = find_right_edge(splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC))
+        down = splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC)
+        left = find_left_edge(down)
+        right = find_right_edge(down)
         top = find_top_edge(splitfiles[i])
         bottom = find_bottom_edge(splitfiles[i])
-        # print("Inferences:")
+        print("Inferences:")
         charwidth = (right - left) + 1
         # charwidth = right
         charheight = bottom - top
         ckerning = left
         cbase = tile_height - (bottom + 1)
-        """print("Width:", charwidth)
+        print("Width:", charwidth)
         print("Height:", charheight)
         print("Kerning:", ckerning)
-        print("Baseline:", cbase)"""
+        print("Baseline:", cbase)
         # if mkerning[i] != 0:
             #print(bchars[i],"has manual kerning!",mkerning[i])
+        print("Adding entry:", i)
         entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, mkerning[i]))
 
     print(len(entries))
