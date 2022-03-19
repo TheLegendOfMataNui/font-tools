@@ -127,7 +127,7 @@ def get_args(ifile):
     return lines
 
 def convert(var):
-    return list(var.to_bytes(4, byteorder='little'))
+    return list(var.to_bytes(4, byteorder='little', signed=True))
 
 def do_things(image, args):
     # Setup for arguments
@@ -166,15 +166,15 @@ def do_things(image, args):
     splitfiles = split_up(im, tile_width, tile_height)
     entries = []
     for i in range(len(splitfiles)):
-        left = find_left_edge(splitfiles[i])
-        right = find_right_edge(splitfiles[i])
+        left = find_left_edge(splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC))
+        right = find_right_edge(splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC))
         top = find_top_edge(splitfiles[i])
         bottom = find_bottom_edge(splitfiles[i])
         # print("Inferences:")
-        charwidth = right - left
+        charwidth = (right - left) + 1
         # charwidth = right
         charheight = bottom - top
-        ckerning = left + 1
+        ckerning = left
         cbase = tile_height - (bottom + 1)
         """print("Width:", charwidth)
         print("Height:", charheight)
@@ -201,9 +201,9 @@ def do_things(image, args):
         fnt.append(entry.code)
         fnt.append(0)
         # fnt.extend(convert(int(round(entry.width/color)) - entry.manual))
-        fnt.extend(convert((entry.width//color) - entry.manual))
-        fnt.extend(convert(int(round(entry.height/color))))
-        fnt.extend(convert((entry.kerning//color) + entry.manual))
+        fnt.extend(convert(entry.width - entry.manual))
+        fnt.extend(convert(entry.height))
+        fnt.extend(convert(entry.kerning + entry.manual))
         # fnt.extend(convert(int(round(entry.kerning/color)) + entry.manual))
         fnt.extend(convert(int(round(entry.baseline/color))))
     # print(fnt)
