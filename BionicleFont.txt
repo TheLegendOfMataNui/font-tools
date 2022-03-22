@@ -36,9 +36,9 @@
 // This is the number (in pixels) for the KERNING. This value can be negative
 -16
 // This is the number (in pixels) from the bottom of the file to the BASELINE of the font
-// THE PROGRAM WILL IGNORE THIS ARGUMENT AND SUBSTITUTE IT FOR 12
-// the reason why I won't remove it altogether is for backwards compatibility
-12
+// It only appears to be used in the loading bar. Higher number means the loading bar periods are LOWER
+// THIS IS UNAFFECTED BY THE RESCALE FACTOR
+10
 // This is the number (in pixels) for the SIZE OF A SPACE
 112
 // This line is used for the RESCALE FACTOR of the font

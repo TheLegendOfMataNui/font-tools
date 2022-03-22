@@ -134,8 +134,7 @@ def do_things(image, args):
     tile_width = int(args[0])  # used for splitting
     tile_height = int(args[1])  # used for splitting
     kerning = int(args[2])  # maybe used?
-    # baseline = int(args[3])  # might be tossed
-    baseline = 12
+    baseline = int(args[3])  # loading bar
     space_size = int(args[4])  # for the header
     if args[5] != "0 0 0 0":
         color = int(args[5])
