@@ -201,7 +201,7 @@ def do_things(image, args):
     fnt.extend(convert(tile_width//color))
     fnt.extend(convert(tile_height//color))
     fnt.extend(convert(kerning//color))
-    fnt.extend(convert(baseline//color))
+    fnt.extend(convert(baseline))
     fnt.extend(convert(space_size//color))
 
     for entry in entries:
