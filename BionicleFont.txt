@@ -36,9 +36,11 @@
 // This is the number (in pixels) for the KERNING. This value can be negative
 -16
 // This is the number (in pixels) from the bottom of the file to the BASELINE of the font
-66
+// THE PROGRAM WILL IGNORE THIS ARGUMENT AND SUBSTITUTE IT FOR 12
+// the reason why I won't remove it altogether is for backwards compatibility
+12
 // This is the number (in pixels) for the SIZE OF A SPACE
-128
+112
 // This line is used for the RESCALE FACTOR of the font
 // In the old TiffSplitter, it would have been the background color for the characters in the font. This is now implied to be anything 
 // that is transparent. 

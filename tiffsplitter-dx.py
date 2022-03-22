@@ -134,14 +134,15 @@ def do_things(image, args):
     tile_width = int(args[0])  # used for splitting
     tile_height = int(args[1])  # used for splitting
     kerning = int(args[2])  # maybe used?
-    baseline = int(args[3])  # might be tossed
+    # baseline = int(args[3])  # might be tossed
+    baseline = 12
     space_size = int(args[4])  # for the header
     if args[5] != "0 0 0 0":
         color = int(args[5])
     else:
         color = 1
     chars = args[6]  # needed
-    mkerning = [int(i) for i in args[7]]
+
 
     # print(chars)
     bchars = []
@@ -164,6 +165,10 @@ def do_things(image, args):
     # now to try parsing this
     im = Image.open(image)
     splitfiles = split_up(im, tile_width, tile_height)
+    try:
+        mkerning = [int(i) for i in args[7]]
+    except:
+        mkerning = [0]*len(splitfiles)
     entries = []
     for i in range(len(splitfiles)):
         down = splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC)
@@ -204,7 +209,7 @@ def do_things(image, args):
         fnt.append(0)
         # fnt.extend(convert(int(round(entry.width/color)) - entry.manual))
         fnt.extend(convert(entry.width - entry.manual))
-        fnt.extend(convert(entry.height))
+        fnt.extend(convert(entry.height//color))
         fnt.extend(convert(entry.kerning + entry.manual))
         # fnt.extend(convert(int(round(entry.kerning/color)) + entry.manual))
         fnt.extend(convert(int(round(entry.baseline/color))))
