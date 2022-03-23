@@ -95,11 +95,11 @@ def split_up(image, w, h):
     print("Tile height: ", h)
     pixels = image.load()
     if image.size[0] % w != 0:
-        print("The program can't split your file into equally sized segments! Please remake your TGA!")
+        print("The program can't split your file into equally sized segments! Please remake your image!")
         input()
         exit()
     if image.size[1] % h != 0:
-        print("The program can't split your file into equally sized segments! Please remake your TGA!")
+        print("The program can't split your file into equally sized segments! Please remake your image!")
         input()
         exit()
     rows = image.size[1] // h
@@ -120,7 +120,6 @@ def split_up(image, w, h):
     return splitfiles
 
 
-
 def get_args(ifile):
     with open(ifile, 'r') as the_file:
         lines = [line.rstrip() for line in the_file if line[:2] != "//"]
@@ -128,6 +127,52 @@ def get_args(ifile):
 
 def convert(var):
     return list(var.to_bytes(4, byteorder='little', signed=True))
+
+def old_kerntable(raw, chars):
+    # this will just assume single-digit numbers
+    kerndict = {}
+    for i in range(len(raw)):
+        if raw[i] != "0":
+            kerndict[chars[i]] = int(raw[i])
+    return kerndict
+
+
+def kerntable(raw, chars):
+    imustgo = False
+    i = 0
+    kerndict = {}
+    if raw[0] != "\\":
+        print("Falling back to old kerning table!")
+        kerndict = old_kerntable(raw[3:], chars)
+        imustgo = True
+    while imustgo is not True:
+        if raw[i] == "\\":  # start of new entry
+            print("Recognized start of new entry!")
+            if raw[i+1] == "\\":  # end is with double backslash
+                print("I must go!")
+                imustgo = True
+                break
+            elif raw[i+1] == "x":  # hex representation
+                high = raw[i+2]
+                low = raw[i+3]
+                newrep = int(high + low, 16)
+                l1 = i+4
+            elif raw[i+1] == "c":  # normal representation
+                newrep = ord(raw[i+2])
+                l1 = i+3
+            newnum = ""
+            # print("Hello?")
+            while raw[l1] != "\\":  # until start of another entry
+                newnum += raw[l1]
+                # print("Parsing number!")
+                l1 += 1
+            kerndict[newrep] = int(newnum)
+            print(kerndict)
+            print("New entry added!")
+        i += 1
+    print(kerndict)
+    return kerndict
+
 
 def do_things(image, args):
     # Setup for arguments
@@ -141,6 +186,7 @@ def do_things(image, args):
     else:
         color = 1
     chars = args[6]  # needed
+
 
 
     # print(chars)
@@ -160,14 +206,34 @@ def do_things(image, args):
             i += 1
         except IndexError:
             pass
+
+    try:
+        manual_table = kerntable(args[7], bchars)
+        print("Manual table generated!")
+    except:
+        print("No manual table!")
+        print(args[7])
+        manual_table = {}
+        pass
+
     # Arguments set up
     # now to try parsing this
-    im = Image.open(image)
-    splitfiles = split_up(im, tile_width, tile_height)
     try:
-        mkerning = [int(i) for i in args[7]]
+        im = Image.open(image[:-3]+"tif")
     except:
-        mkerning = [0]*len(splitfiles)
+        try:
+            print("TIF not found - Falling back to TGA")
+            im = Image.open(image[:-3]+"tga")
+        except:
+            print("TGA not found - falling back to PNG")
+            try:
+                im = Image.open(image[:-3]+"png")
+            except:
+                print("PNG not found")
+                exit()
+    splitfiles = split_up(im, tile_width, tile_height)
+
+
     entries = []
     for i in range(len(splitfiles)):
         down = splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC)
@@ -175,23 +241,25 @@ def do_things(image, args):
         right = find_right_edge(down)
         top = find_top_edge(splitfiles[i])
         bottom = find_bottom_edge(splitfiles[i])
-        print("Inferences:")
         charwidth = (right - left) + 1
         # charwidth = right
         charheight = bottom - top
         ckerning = left
         cbase = tile_height - (bottom + 1)
+        """print("Inferences:")
         print("Width:", charwidth)
         print("Height:", charheight)
         print("Kerning:", ckerning)
-        print("Baseline:", cbase)
-        # if mkerning[i] != 0:
-            #print(bchars[i],"has manual kerning!",mkerning[i])
+        print("Baseline:", cbase)"""
         print("Adding entry:", i)
-        entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, mkerning[i]))
+        try:
+            print("Manual kerning found!", manual_table[bchars[i]])
+            entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, manual_table[bchars[i]]))
+        except KeyError:
+            # print("No manual kerning found!")
+            entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, 0))
 
     print(len(entries))
-    print(len(mkerning))
     # FILE OUTPUT
     fnt = []
     fnt.extend(convert(1))
@@ -231,13 +299,13 @@ def do_things(image, args):
 
 if len(sys.argv) <= 2:
     print("Too few arguments")
-    print("Usage: tiffsplitter-dx.py <image>.tga <fontinfofile>")
+    print("Usage: tiffsplitter-dx.py <image>.tif <fontinfofile>")
     input()
     exit()
 
 if len(sys.argv) >= 4:
     print("Too many arguments")
-    print("Usage: tiffsplitter-dx.py <image>.tga <fontinfofile>")
+    print("Usage: tiffsplitter-dx.py <image>.tif <fontinfofile>")
     input()
     exit()
     
