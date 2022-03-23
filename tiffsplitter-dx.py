@@ -120,7 +120,6 @@ def split_up(image, w, h):
     return splitfiles
 
 
-
 def get_args(ifile):
     with open(ifile, 'r') as the_file:
         lines = [line.rstrip() for line in the_file if line[:2] != "//"]
@@ -128,6 +127,40 @@ def get_args(ifile):
 
 def convert(var):
     return list(var.to_bytes(4, byteorder='little', signed=True))
+
+
+def kerntable(raw):
+    imustgo = False
+    i = 0
+    kerndict = {}
+    while imustgo is not True:
+        if raw[i] == "\\":  # start of new entry
+            print("Recognized start of new entry!")
+            if raw[i+1] == "\\":  # end is with double backslash
+                print("I must go!")
+                imustgo = True
+                break
+            elif raw[i+1] == "x":  # hex representation
+                high = raw[i+2]
+                low = raw[i+3]
+                newrep = int(high + low, 16)
+                l1 = i+4
+            elif raw[i+1] == "c":  # normal representation
+                newrep = ord(raw[i+2])
+                l1 = i+3
+            newnum = ""
+            # print("Hello?")
+            while raw[l1] != "\\":  # until start of another entry
+                newnum += raw[l1]
+                # print("Parsing number!")
+                l1 += 1
+            kerndict[newrep] = int(newnum)
+            print(kerndict)
+            print("New entry added!")
+        i += 1
+    print(kerndict)
+    return kerndict
+
 
 def do_things(image, args):
     # Setup for arguments
@@ -142,6 +175,13 @@ def do_things(image, args):
         color = 1
     chars = args[6]  # needed
 
+    try:
+        manual_table = kerntable(args[7])
+        print("Manual table generated!")
+    except:
+        print("No manual table!")
+        print(args[7])
+        manual_table = {}
 
     # print(chars)
     bchars = []
@@ -162,12 +202,16 @@ def do_things(image, args):
             pass
     # Arguments set up
     # now to try parsing this
-    im = Image.open(image)
-    splitfiles = split_up(im, tile_width, tile_height)
     try:
-        mkerning = [int(i) for i in args[7]]
+        im = Image.open(image)
     except:
-        mkerning = [0]*len(splitfiles)
+        try:
+            print("TGA not found - Falling back to PNG")
+            im = Image.open(image[:-3]+"png")
+        except:
+            print("PNG not found")
+            exit()
+    splitfiles = split_up(im, tile_width, tile_height)
     entries = []
     for i in range(len(splitfiles)):
         down = splitfiles[i].resize((tile_width//color, tile_height//color), resample = Image.BICUBIC)
@@ -175,23 +219,25 @@ def do_things(image, args):
         right = find_right_edge(down)
         top = find_top_edge(splitfiles[i])
         bottom = find_bottom_edge(splitfiles[i])
-        print("Inferences:")
         charwidth = (right - left) + 1
         # charwidth = right
         charheight = bottom - top
         ckerning = left
         cbase = tile_height - (bottom + 1)
+        """print("Inferences:")
         print("Width:", charwidth)
         print("Height:", charheight)
         print("Kerning:", ckerning)
-        print("Baseline:", cbase)
-        # if mkerning[i] != 0:
-            #print(bchars[i],"has manual kerning!",mkerning[i])
+        print("Baseline:", cbase)"""
         print("Adding entry:", i)
-        entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, mkerning[i]))
+        try:
+            print("Manual kerning found!", manual_table[bchars[i]])
+            entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, manual_table[bchars[i]]))
+        except KeyError:
+            # print("No manual kerning found!")
+            entries.append(FNTEntry(bchars[i], charwidth, charheight, ckerning, cbase, 0))
 
     print(len(entries))
-    print(len(mkerning))
     # FILE OUTPUT
     fnt = []
     fnt.extend(convert(1))
