@@ -47,7 +47,7 @@ def convert(var, byteorder='little', s=True):
 
 def image_to_ints(image):
     img_bytes = io.BytesIO()
-    image.save(img_bytes, "TGA")
+    image.save(img_bytes, "TGA", compression="tga_rle")
     img_bytes = img_bytes.getvalue()
     return list(img_bytes)
 

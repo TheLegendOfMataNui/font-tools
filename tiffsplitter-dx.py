@@ -285,7 +285,7 @@ def do_things(image, args):
         print("Creating directory!")
         os.makedirs(image[:-4]+"/")
     for i in range(len(splitfiles)):
-        splitfiles[i].save(image[:-4]+"/"+image[:-4]+"0_"+str(i)+".tga", "TGA")
+        splitfiles[i].save(image[:-4]+"/"+image[:-4]+"0_"+str(i)+".tga", "TGA", compression="tga_rle")
         # print("Save",i)
         # input()
 
