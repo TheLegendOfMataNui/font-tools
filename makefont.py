@@ -9,6 +9,9 @@ import sys
 from PIL import Image
 import io
 import on_split
+import struct # because python 2
+
+
 
 compress = False
 
@@ -36,18 +39,28 @@ class FNTEntry:
 
 
 def BKDRHash(istr):  # thank you jmmb
+    # print("Taking in",istr)
     seed = 131
     ohash = 0
     for char in istr:
         ohash = (ohash*seed)+ord(char)
+    # print("Returning",ohash & 0xFFFFFFFF)
     return ohash & 0xFFFFFFFF
 
 def convert(var, byteorder='little', s=True):
-    return list(var.to_bytes(4, byteorder=byteorder, signed=s))
+    try:
+        final = list(var.to_bytes(4, byteorder=byteorder, signed=s))
+    except:
+        format = "<" if byteorder == 'little' else ">"
+        f2 = "i" if s is True else "I"       
+        final = list(struct.pack(format+f2, var))
+        final = [ord(el) for el in final]
+    return final
 
 def image_to_ints(image):
     img_bytes = io.BytesIO()
     image.save(img_bytes, "TGA", compression="tga_rle")
+    # image.save(img_bytes, "TGA")
     img_bytes = img_bytes.getvalue()
     return list(img_bytes)
 
@@ -161,7 +174,12 @@ def do_the_thing(font):
     all_names = [font+"0_"+str(i)+".tga" for i in range(len(splitfiles))]+[font+".fnt"]
     # yay now it's all done
     all_hashes = {BKDRHash(all_names[i]): i for i in range(len(all_names))}
+    sorted_hashes = sorted(all_hashes)
+    sorted_indices = [all_hashes[i] for i in sorted_hashes]
     sorted_list = {i: all_hashes[i] for i in sorted(all_hashes)}
+    # print(all_hashes)
+    # print(sorted(all_hashes))
+    # print(sorted_list)
     # the index we need is for all_files
     # all_hashes
 
@@ -187,28 +205,31 @@ def do_the_thing(font):
 
     compflag = {}
 
-    for i in sorted_list:
-        the_hash = convert(i, 'big', False)
+    for i in range(len(sorted_hashes)):
+        the_hash = convert(sorted_hashes[i], 'big', False)
+        # print("Hash incoming",sorted_hashes[i])
+        # print(the_hash)
+        # input()
         full_col_file.extend(the_hash)
-        if compress and all_names[sorted_list[i]][-3:] == "tga":
+        if compress and all_names[sorted_indices[i]][-3:] == "tga":
             full_col_file.extend(convert(17, 'big'))
-            compflag[i] = True
-        elif compress and all_names[sorted_list[i]][-3:] != "tga":
+            compflag[sorted_indices[i]] = True
+        elif compress and all_names[sorted_indices[i]][-3:] != "tga":
             full_col_file.extend(convert(1, 'big'))
-            compflag[i] = False
+            compflag[sorted_indices[i]] = False
         else:
             full_col_file.extend(convert(1, 'big'))
-            compflag[i] = False
+            compflag[sorted_indices[i]] = False
         getback.append(len(full_col_file))
         full_col_file.extend(convert(0, 'big'))
-        full_col_file.extend(convert(len(all_files[sorted_list[i]]), 'big'))
+        full_col_file.extend(convert(len(all_files[sorted_indices[i]]), 'big'))
     # indices done
     gb2 = []
-    for i in sorted_list:
-        data = all_files[sorted_list[i]]
-        if compflag[i]:
+    for i in range(len(sorted_hashes)):
+        data = all_files[sorted_indices[i]]
+        if compflag[sorted_indices[i]]:
             lzss = blkfile.BLKLZSS()
-            data = lzss.encode(data)
+            data = lzss.encode(bytearray(data))
         gb2.append(len(full_col_file))
         # print(hex(len(full_col_file)))
         full_col_file.extend(list(data))

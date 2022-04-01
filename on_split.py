@@ -103,8 +103,12 @@ def split_up(image, w, h):
 
 
 def get_args(ifile):
-    with open(ifile, 'r', encoding="UTF-8") as the_file:
-        lines = [line.rstrip() for line in the_file if line[:2] != "//"]
+    try:
+        with open(ifile, 'r', encoding="UTF-8") as the_file:
+            lines = [line.rstrip() for line in the_file if line[:2] != "//"]
+    except:
+        with open(ifile, 'r') as the_file:
+            lines = [line.rstrip() for line in the_file if line[:2] != "//"]
     return lines
 
 def old_kerntable(raw, chars):
